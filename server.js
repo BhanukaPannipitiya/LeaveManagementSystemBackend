@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 5001;
 app.get("/", (req, res) => {
     res.send("Hello World 1123");
 });
-
+app.use(express.json());
 app.use("/api/auth",authRoutes);
 
 app.listen(PORT, () => {
