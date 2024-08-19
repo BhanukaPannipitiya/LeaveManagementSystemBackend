@@ -5,25 +5,18 @@ import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js
 import { sendPasswordResetEmail, sendPasswordResetSuccessEmail, sendVerificationEmail, sendWelcomeEmail } from "../mailtrap/email.js";
 
 export const signup = async (req, res) => {
-
     const { email, password, name } = req.body;
-    console.log("here at the sign up")
+    console.log("here at the sign up");
 
     try {
-
         if (!email || !password || !name) {
-
             throw new Error("Please fill all the fields");
         }
 
         const userAlreadyExists = await User.findOne({ email });
 
         if (userAlreadyExists) {
-
-            res.status(400).json({ success: false, message: "User already exists" });
-
-            throw new Error("User already exists");
-
+            return res.status(400).json({ success: false, message: "User already exists" });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -31,21 +24,19 @@ export const signup = async (req, res) => {
         const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
 
         const user = new User({
-
             email,
             password: hashedPassword,
             name,
             verificationToken,
             verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
-
         });
         console.log("user ", user);
         await user.save();
 
-        //jwt authentication
+        // JWT authentication
         generateTokenAndSetCookie(res, user._id);
 
-        //send email verification token
+        // Send email verification token
         await sendVerificationEmail(user.email, verificationToken);
 
         res.status(201).json({
@@ -58,10 +49,14 @@ export const signup = async (req, res) => {
         });
 
     } catch (error) {
-
-        res.status(400).json({ success: false, message: error.message });
+        if (!res.headersSent) {  // Check if headers are already sent
+            res.status(400).json({ success: false, message: error.message });
+        } else {
+            console.error("Headers already sent:", error);
+        }
     }
 }
+
 
 export const verifyEmail = async (req, res) => {
     const { code } = req.body;
