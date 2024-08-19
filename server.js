@@ -10,10 +10,9 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 app.use(cors({
-    origin: '*',  // Allows CORS from any origin
+    origin: "http://localhost:5173",
     credentials: true
 }));
-
 
 app.get("/", (req, res) => {
     res.send("Hello World 1123");
