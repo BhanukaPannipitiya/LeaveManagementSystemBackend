@@ -85,6 +85,27 @@ export const verifyEmail = async (req, res) => {
     }
 }
 
+export const resendVerificationEmail = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ success: false, message: "User not found" });
+        }
+
+        const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+        await sendVerificationEmail(user.email, verificationToken);
+
+
+
+    } catch (error) {
+        console.log("Error resending verification email", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+
+}
+
+
 export const login = async (req, res) => {
     const { email, password } = req.body;
 
@@ -99,11 +120,15 @@ export const login = async (req, res) => {
         if (!isPasswordValid) {
             return res.status(400).json({ success: false, message: "Invalid credentials" });
         }
+        const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
 
         generateTokenAndSetCookie(res, user._id);
-
         user.lastlogin = Date.now();
+        user.verificationToken = verificationToken;
+        user.verificationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
         await user.save();
+
+        await sendVerificationEmail(email, verificationToken);
 
         res.status(200).json({ success: true, message: "Logged in successfully", user: { ...user._doc, password: undefined } });
 
