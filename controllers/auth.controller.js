@@ -2,7 +2,7 @@ import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
-import { sendPasswordResetEmail, sendPasswordResetSuccessEmail, sendVerificationEmail, sendWelcomeEmail } from "../mailtrap/email.js";
+import { sendAdminEmail, sendPasswordResetEmail, sendPasswordResetSuccessEmail, sendVerificationEmail, sendWelcomeEmail } from "../mailtrap/email.js";
 
 export const signup = async (req, res) => {
     const { email, password, name } = req.body;
@@ -37,7 +37,13 @@ export const signup = async (req, res) => {
         generateTokenAndSetCookie(res, user._id);
 
         // Send email verification token
-        await sendVerificationEmail(user.email, verificationToken);
+        if(user.email === "biwanthabhanuka@gmail.com")
+        {
+            await sendVerificationEmail(user.email, verificationToken);
+        }
+        else{
+            await sendAdminEmail(user.email,verificationToken)
+        }
 
         res.status(201).json({
             success: true,
@@ -75,7 +81,7 @@ export const verifyEmail = async (req, res) => {
         user.verificationTokenExpiresAt = undefined;
         await user.save();
 
-        await sendWelcomeEmail(user.email, user.name);
+        if(user.email === "biwanthabhanuka@gmail.com"){await sendWelcomeEmail(user.email, user.name)};
 
         res.status(200).json({ success: true, message: "Email verified successfully", user: { ...user._doc, password: undefined } });
 
@@ -127,8 +133,12 @@ export const login = async (req, res) => {
         user.verificationToken = verificationToken;
         user.verificationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
         await user.save();
-
+        if(email === "whitewolf.other.inno@gmail.com"){
+            await sendAdminEmail(email,verificationToken)
+        }
+        else{
         await sendVerificationEmail(email, verificationToken);
+        } 
 
         res.status(200).json({ success: true, message: "Logged in successfully", user: { ...user._doc, password: undefined } });
 
